@@ -12,8 +12,11 @@ class RegisterPage extends React.Component {
                 lastName: '',
                 email: '',
                 username: '',
-                password: ''
+                password: ''                
             },
+            isEmailValid: false,
+            isPasswordValid: false,
+            isFormValid: false,
             submitted: false
         };
 
@@ -22,7 +25,8 @@ class RegisterPage extends React.Component {
     }
 
     handleChange(event) {
-        const { name, value } = event.target;
+        const { name, value } = event.target;     
+
         const { user } = this.state;
         this.setState({
             user: {
@@ -30,15 +34,28 @@ class RegisterPage extends React.Component {
                 [name]: value
             }
         });
+
+        if (name=="email" && value) {
+            const emailValid =RegExp(/^([\w.%+-]+)@([\w-]+\.)+([\w]{2,})$/i).test(value);
+            this.setState({
+                isEmailValid: emailValid ? true : false
+            });
+        }
+
+        if (name=="password"&& value) {
+            this.setState({
+                isPasswordValid: (value.length > 5 ? true : false)
+            });
+        }
     }
 
     handleSubmit(event) {
         event.preventDefault();
 
-        this.setState({ submitted: true });
+        this.setState({ submitted: true });        
         const { user } = this.state;
         const { dispatch } = this.props;
-        if (user.firstName && user.lastName && user.username && user.password && user.email) {
+        if (user.firstName && user.lastName && user.username && this.state.isEmailValid && this.state.isPasswordValid) {
             authenticationService.register(user).then(data => {
                 const { from } = this.props.location.state || { from: { pathname: "/login" } };
                 this.props.history.push(from);
@@ -49,6 +66,10 @@ class RegisterPage extends React.Component {
     render() {
         const { registering } = this.props;
         const { user, submitted } = this.state;
+        const { isEmailValid, isPasswordValid } = this.state;
+
+        const emailErrorClass = submitted && (!user.email || !isEmailValid) ? ' is-invalid' : '';
+        const passErrorClass = submitted && (!user.password || !isPasswordValid) ? ' is-invalid' : '';
         return (            
             <div className="col-md-6 offset-md-3">
                 <div className="card">
@@ -67,7 +88,7 @@ class RegisterPage extends React.Component {
                                 <input type="text" className={'form-control' + (submitted && !user.lastName ? ' is-invalid' : '')} name="lastName" value={user.lastName} onChange={this.handleChange} />
                                 {submitted && !user.lastName &&
                                     <div className="invalid-feedback">Last Name is required</div>
-                                }
+                                }                                
                             </div>
                             <div className="form-group">
                                 <label htmlFor="username">Username</label>
@@ -78,16 +99,22 @@ class RegisterPage extends React.Component {
                             </div>
                             <div className="form-group">
                                 <label htmlFor="email">Email</label>
-                                <input type="text" className={'form-control' + (submitted && !user.email ? ' is-invalid' : '')} name="email" value={user.email} onChange={this.handleChange} />
+                                <input type="text" className={'form-control' + emailErrorClass} name="email" value={user.email} onChange={this.handleChange} />
                                 {submitted && !user.email &&
                                     <div className="invalid-feedback">Email is required</div>
+                                }
+                                {submitted && user.email && !isEmailValid &&
+                                    <div className="invalid-feedback">Enter a valid email</div>
                                 }
                             </div>
                             <div className="form-group">
                                 <label htmlFor="password">Password</label>
-                                <input type="password" className={'form-control' + (submitted && !user.password ? ' is-invalid' : '')} name="password" value={user.password} onChange={this.handleChange} />
+                                <input type="password" className={'form-control' + passErrorClass} name="password" value={user.password} onChange={this.handleChange} />
                                 {submitted && !user.password &&
                                     <div className="invalid-feedback">Password is required</div>
+                                }
+                                {submitted && user.password && !isPasswordValid &&
+                                    <div className="invalid-feedback">Password value must be greater than 5</div>
                                 }
                             </div>
                             <div className="form-group">
