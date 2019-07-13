@@ -1,0 +1,19 @@
+version: '3.0'
+
+services:
+  react:
+    build: react-app
+    ports:
+      - "8080:8080"
+
+  node:
+    build: node-app-be
+    ports:
+      - "4000:4000"  
+    links:
+      - mongo
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
